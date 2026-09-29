@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>手写数字画板 — MNIST 测试工具</title>
+<style>
+  body { font-family: "Microsoft YaHei", sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 24px; margin: 0; }
+  h1 { font-size: 20px; color: #1a2b4a; margin: 0 0 6px; }
+  p.tip { font-size: 13px; color: #667; margin: 0 0 16px; }
+  .wrap { display: flex; gap: 24px; align-items: flex-start; }
+  #board { background: #000; border-radius: 12px; cursor: crosshair; box-shadow: 0 2px 10px rgba(0,0,0,.15); touch-action: none; }
+  .side { display: flex; flex-direction: column; gap: 10px; width: 200px; }
+  button { padding: 10px 0; font-size: 15px; border: none; border-radius: 8px; cursor: pointer; font-family: inherit; }
+  #save { background: #2f5fa8; color: #fff; }
+  #clear { background: #e4e7ec; color: #333; }
+  .note { font-size: 12px; color: #889; line-height: 1.7; }
+  .note b { color: #2f5fa8; }
+</style>
+</head>
+<body>
+<h1>手写数字画板</h1>
+<p class="tip">用鼠标在黑板上写一个数字（写大一点、居中一点），点「保存 PNG」，再用模型预测它</p>
+<div class="wrap">
+  <canvas id="board" width="280" height="280"></canvas>
+  <div class="side">
+    <button id="save">保存 PNG</button>
+    <button id="clear">清除重写</button>
+    <div class="note">
+      <b>保存之后怎么测？</b><br><br>
+      1. 把下载的 PNG 放到项目的
+      <b>test_images/</b> 文件夹<br><br>
+      2. PyCharm 运行配置「看预测效果」的形参改成：<br>
+      <b>--model cnn --image test_images/我的数字.png</b><br><br>
+      3. 运行，看模型猜的是什么
+    </div>
+  </div>
+</div>
+<script>
+  const canvas = document.getElementById('board');
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, 280, 280);
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 22;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  let drawing = false;
+  function pos(e) {
+    const r = canvas.getBoundingClientRect();
+    return [(e.clientX - r.left) * 280 / r.width, (e.clientY - r.top) * 280 / r.height];
+  }
+  canvas.addEventListener('pointerdown', e => { drawing = true; const [x, y] = pos(e); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 0.1, y + 0.1); ctx.stroke(); });
+  canvas.addEventListener('pointermove', e => { if (!drawing) return; const [x, y] = pos(e); ctx.lineTo(x, y); ctx.stroke(); });
+  window.addEventListener('pointerup', () => drawing = false);
+
+  document.getElementById('clear').onclick = () => { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 280, 280); };
+  document.getElementById('save').onclick = () => {
+    const a = document.createElement('a');
+    a.download = 'my_digit.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  };
+</script>
+</body>
+</html>
